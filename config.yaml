@@ -1,5 +1,5 @@
 ---
-reference: hg19
+reference: hg38
 genotyper: wssd_cc
 data_types:
     - wssd
@@ -15,7 +15,7 @@ main_dataset:
 append_dataset: 
     - archaics
     - nhp
-master_manifest: /net/eichler/vol2/eee_shared/whole_genome_resources/all_diversity.manifest.filtered.tab
+master_manifest: /net/eichler/vol26/eee_shared/whole_genome_resources/all_diversity.manifest.filtered.tab
 pop_codes: dat/super_pop_codes.tab
 table_dir: tables
 plot_dir: plots
@@ -32,7 +32,7 @@ ref_files:
         sunk_mask: ~psudmant/genomes/sunk_tracks/hg19/hg19_sunk_depth_mask.dts
         sunk_bed: /net/eichler/vol5/home/bnelsj/projects/gene_grams/hg19_suns.no_repeats_36bp_flanking.bed
     hg38: 
-        contigs: /net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_contigs.tab
-        wssd_mask: /net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_noWM_pad36
-        sunk_mask: /net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_sunk_mask_track_pad36_e0.dts
-        sunk_bed: /net/eichler/vol2/eee_shared/assemblies/hg38/sunks/suns.no_repeats_36bp_flanking.bed
+        contigs: /net/eichler/vol26/eee_shared/nobackups/archive/assemblies/hg38/read_depth/illumina/hg38_contigs.tab
+        wssd_mask: /net/eichler/vol26/eee_shared/nobackups/archive/assemblies/hg38/read_depth/illumina/hg38_noWM_pad36
+        sunk_mask: /net/eichler/vol26/eee_shared/nobackups/archive/assemblies/hg38/read_depth/illumina/hg38_sunk_mask_track_pad36_e0.dts
+        sunk_bed: /net/eichler/vol26/eee_shared/nobackups/archive/assemblies/hg38/sunks/suns.no_repeats_36bp_flanking.bed
