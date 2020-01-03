@@ -2,9 +2,11 @@ import csv
 import os
 import pandas as pd
 
+SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
+
 configfile: "config.yaml"
 
-shell.prefix("source dat/modules.txt; ")
+shell.prefix("source dat/modules.txt; export PYTHONPATH=$PYTHONPATH:{0}/wssd_sunk ".format(SNAKEMAKE_DIR))
 
 COORDS = list(config.get("bedfiles").values())
 REGION_NAMES = list(config.get("bedfiles").keys())
