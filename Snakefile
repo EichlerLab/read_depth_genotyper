@@ -6,7 +6,7 @@ SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 
 configfile: "config.yaml"
 
-shell.prefix("source dat/modules.txt; export PYTHONPATH=$PYTHONPATH:{0}/wssd_sunk ".format(SNAKEMAKE_DIR))
+shell.prefix("source dat/modules.txt; export PYTHONPATH=$PYTHONPATH:{0}/wssd_sunk:{0}/ssf_DTS_caller".format(SNAKEMAKE_DIR))
 
 COORDS = list(config.get("bedfiles").values())
 REGION_NAMES = list(config.get("bedfiles").keys())
