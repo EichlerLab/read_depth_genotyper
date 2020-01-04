@@ -26,11 +26,11 @@ gene_gram_settings: --color_column super_pop --hclust --include_coords --label_h
 spp: 500
 datasets_file: dat/datasets.tab
 ref_files:
-    hg19: 
-        contigs: ~psudmant/genomes/contigs/hg19_contigs.txt
-        wssd_mask: ~psudmant/genomes/mask_tracks/HG19-noWM-pad36
-        sunk_mask: ~psudmant/genomes/sunk_tracks/hg19/hg19_sunk_depth_mask.dts
-        sunk_bed: /net/eichler/vol5/home/bnelsj/projects/gene_grams/hg19_suns.no_repeats_36bp_flanking.bed
+    hg19:
+        contigs: /net/eichler/vol26/eee_shared/assemblies/hg19/legacy/hg19_contigs.txt
+        wssd_mask: /net/eichler/vol26/eee_shared/assemblies/hg19/legacy/mask_tracks/HG19-noWM-pad36
+        sunk_mask: /net/eichler/vol26/eee_shared/assemblies/hg19/legacy/sunk_tracks/hg19_sunk_depth_mask.dts
+        sunk_bed: /net/eichler/vol26/eee_shared/assemblies/hg19/legacy/sunks/hg19_suns.no_repeats_36bp_flanking.bed
     hg38: 
         contigs: /net/eichler/vol26/eee_shared/nobackups/archive/assemblies/hg38/read_depth/illumina/hg38_contigs.tab
         wssd_mask: /net/eichler/vol26/eee_shared/nobackups/archive/assemblies/hg38/read_depth/illumina/hg38_noWM_pad36
