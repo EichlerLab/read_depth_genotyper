@@ -31,8 +31,8 @@ ref_files:
         wssd_mask: /net/eichler/vol26/eee_shared/assemblies/hg19/legacy/mask_tracks/HG19-noWM-pad36
         sunk_mask: /net/eichler/vol26/eee_shared/assemblies/hg19/legacy/sunk_tracks/hg19_sunk_depth_mask.dts
         sunk_bed: /net/eichler/vol26/eee_shared/assemblies/hg19/legacy/sunks/hg19_suns.no_repeats_36bp_flanking.bed
-    hg38: 
-        contigs: /net/eichler/vol26/eee_shared/nobackups/archive/assemblies/hg38/read_depth/illumina/hg38_contigs.tab
-        wssd_mask: /net/eichler/vol26/eee_shared/nobackups/archive/assemblies/hg38/read_depth/illumina/hg38_noWM_pad36
-        sunk_mask: /net/eichler/vol26/eee_shared/nobackups/archive/assemblies/hg38/read_depth/illumina/hg38_sunk_mask_track_pad36_e0.dts
-        sunk_bed: /net/eichler/vol26/eee_shared/nobackups/archive/assemblies/hg38/sunks/suns.no_repeats_36bp_flanking.bed
+    hg38:
+        contigs: /net/eichler/vol26/eee_shared/assemblies/hg38/legacy/read_depth/illumina/hg38_contigs.tab
+        wssd_mask: /net/eichler/vol26/eee_shared/assemblies/hg38/legacy/read_depth/illumina/hg38_noWM_pad36
+        sunk_mask: /net/eichler/vol26/eee_shared/assemblies/hg38/legacy/read_depth/illumina/hg38_sunk_mask_track_pad36_e0.dts
+        sunk_bed: /net/eichler/vol26/eee_shared/assemblies/hg38/legacy/sunks/suns.no_repeats_36bp_flanking.bed
