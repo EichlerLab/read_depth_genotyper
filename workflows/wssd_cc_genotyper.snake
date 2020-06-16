@@ -4,7 +4,7 @@ import os
 SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 SCRIPT_DIR = SNAKEMAKE_DIR + "/../wssd_sunk"
 
-shell.prefix("source env.cfg; export PYTHONPATH=$PYTHONPATH:%s; " % SCRIPT_DIR)
+shell.prefix("source {0}/env.cfg; export PYTHONPATH=$PYTHONPATH:{0}/wssd_sunk:{0}/ssf_DTS_caller; ".format(SNAKEMAKE_DIR))
 
 COORDS = list(config.get("bedfiles").values())
 REGION_SETS = list(config["bedfiles"].keys())
@@ -12,82 +12,116 @@ REGION_SETS = list(config["bedfiles"].keys())
 REFERENCE = config["reference"]
 DATASETS = config["datasets"]
 
-ds_manifest = pd.read_table(config["datasets_file"], header=0)
+ds_manifest = pd.read_csv(config["datasets_file"], header=0, sep='\t')
 ds_manifest = ds_manifest.ix[ds_manifest.reference == REFERENCE, :]
 ds_manifest.index = ds_manifest.dataset
 
 def get_input_files_from_ds_name(wildcards):
-    ds_dat = ds_manifest.loc[wildcards.ds]
-    return [ds_dat.split_index, ds_dat.genome_index, ds_dat.sex_info, ds_dat.split_index + "/" + wildcards.sample]
+	ds_dat = ds_manifest.loc[wildcards.ds]
+	return [ds_dat.split_index, ds_dat.genome_index, ds_dat.sex_info, ds_dat.split_index + "/" + wildcards.sample]
 
 def get_samples_from_ds(wildcards):
-    data_path = ds_manifest.loc[wildcards.ds]["genome_index"]
-    data = pd.read_table(data_path, header=None)
-    data.columns = ["sample", "mapping", "bac_analysis", "sequences", "primary_analysis"]
-    return ["%s/%s/%s_%s" % (wildcards.fam, wildcards.ds, wildcards.dt, sn) for sn in data["sample"].unique().tolist()]
+	data_path = ds_manifest.loc[wildcards.ds]["genome_index"]
+	data = pd.read_table(data_path, header=None)
+	data.columns = ["sample", "mapping", "bac_analysis", "sequences", "primary_analysis"]
+	return ["%s/%s/%s_%s" % (wildcards.fam, wildcards.ds, wildcards.dt, sn) for sn in data["sample"].unique().tolist()]
 
 localrules: genotype
 
 rule genotype:
-    input: expand("{fam}/{fam}.{ds}.{dt}.{gt_type}.tab", fam = REGION_SETS, ds = DATASETS, dt = ["wssd", "sunk"], gt_type = ["genotypes", "GMM.genotypes"])
-
-rule get_GMM_genotypes:
-    input: "{fam}/{fam}.{ds}.{dt}.genotypes.tab"
-    output: "{fam}/{fam}.{ds}.{dt}.GMM.genotypes.tab"
-    params: sge_opts = "-N GMM -l h_rt=1:00:00", max_cp = "12"
-    shell:
-        "python wssd_sunk/get_GMM_genotypes.py {input} {output} --max_cp {params.max_cp}"
-
-rule convert_genotypes:
-    input: "{fam}/{ds}/{fam}_{ds}_{dt}.tab"
-    output: "{fam,\w+}/{fam}.{ds,\w+}.{dt,\w+}.genotypes.tab"
-    params: sge_opts = "-N convert_gts -l h_rt=0:10:00"
-    run:
-        pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep=r"\s*", index_col=False)
-        regions = pd.read_csv(config["bedfiles"][wildcards.fam], header = None, sep = r"\s*", index_col=False)
-        regions.columns = ["chr", "start", "end", "name", "score", "strand", "thickStart", "thickEnd", "itemRgb" "blockCount", "blockSizes", "blockStarts"][0:len(regions.columns)]
-        cns = pd.read_csv(input[0], header = 0, sep = r"\s*", index_col=False)
-        new_cns_cols = cns.columns.tolist()
-        name_mapping_file = str(ds_manifest.loc[wildcards.ds]["name_mapping"])
-        if name_mapping_file not in ["None", "NA", "none", "nan"]:
-            name_mapping = pd.read_csv(name_mapping_file, sep=r"\s*", header=None, index_col=0)
-            for i, col in enumerate(new_cns_cols):
-                if col in name_mapping.index:
-                    new_cns_cols[i] = name_mapping.loc[col].tolist()[0]
-
-        cns.columns = new_cns_cols
-        include_samples = [sn for sn in new_cns_cols if sn in pop_file["sample"].tolist()]
-        
-        cns = cns[["chr", "start", "end"] + include_samples]
-        data = regions.merge(cns, on=["chr", "start", "end"])
-        data.to_csv(output[0], index=False, sep="\t", na_rep = "NA")
-
-rule make_cn_table:
-    input: get_samples_from_ds
-    output: "{fam}/{ds}/{fam}_{ds}_{dt}.tab"
-    params: sge_opts="-N cn_table -l h_rt=0:10:00 -l mfree=1G", out_dir = "{fam}/{ds}", out_file = "{fam}_{ds}_{dt}.tab"
-    log: "log/{ds}/{dt}_ml_summary.txt"
-    run:
-        sex_info = ds_manifest.loc[wildcards.ds]["sex_info"]
-        genome_index = ds_manifest.loc[wildcards.ds]["genome_index"]
-        input_dir = os.path.dirname(input[0])
-        regions = config["bedfiles"][wildcards.fam]
-        shell("python wssd_sunk/make_ml_output_summary.py --input_dir {input_dir} --input_file_name {wildcards.dt} --input_regions {regions} --sex_pop_index {sex_info} --input_genomes {genome_index} --outdir {params.out_dir} --out_file {params.out_file} --regress")
+	input: 
+	expand("{fam}/{fam}.{ds}.{dt}.{gt_type}.tab", fam = REGION_SETS, ds = DATASETS, dt = ["wssd", "sunk"], gt_type = ["genotypes", "GMM.genotypes"])
 
 rule do_ml_analysis:
-    input: get_input_files_from_ds_name
-    output: "{fam}/{ds}/{dt,wssd|sunk}_{sample}"
-    params: sge_opts="-N ml_analysis -l h_rt=4:0:00 -l mfree=2G", sample = "{sample}", dt = "{dt}", out_dir = "{fam}/{ds}"
-    log: "log/{ds}/{sample}_{dt}_ml_analysis.txt"
-    run:
-        contigs_file = config["ref_files"][REFERENCE]["contigs"]
-        regions = config["bedfiles"][wildcards.fam]
-        if params.dt == "wssd":
-            mask_file = config["ref_files"][REFERENCE]["wssd_mask"]
-            param_file = "_filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim0-ed-all.per_bac_params"
-            additional_args = ""
-        else:
-            mask_file = config["ref_files"][REFERENCE]["sunk_mask"]
-            param_file = "_filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim1-ed-0.per_1kb_params"
-            additional_args = "--sunk_based"
-        shell("python wssd_sunk/ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {regions} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file {param_file} --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {params.out_dir} --omit_sample_name {additional_args}")
+	input: 
+		get_input_files_from_ds_name
+	output: 
+		sample = "{fam}/{ds}/{dt,wssd|sunk}_{sample}"
+	params: 
+		sge_opts="-N ml_analysis -l h_rt=4:0:00 -l mfree=2G", 
+		out_dir = "{fam}/{ds}"
+	resources:
+		mem = 2
+	threads: 1
+	run:
+		contigs_file = config["ref_files"][REFERENCE]["contigs"]
+		regions = config["bedfiles"][wildcards.fam]
+		if params.dt == "wssd":
+			mask_file = config["ref_files"][REFERENCE]["wssd_mask"]
+			param_file = "_filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim0-ed-all.per_bac_params"
+			additional_args = ""
+		else:
+			mask_file = config["ref_files"][REFERENCE]["sunk_mask"]
+			param_file = "_filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim1-ed-0.per_1kb_params"
+			additional_args = "--sunk_based"
+		shell("python wssd_sunk/ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {regions} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{wildcards.sample} --sex_pop_index {input[2]} --param_file {param_file} --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {params.out_dir} --omit_sample_name {additional_args}")
+
+
+
+rule make_cn_table:
+	input: 
+		get_samples_from_ds
+	output: 
+		tab = "{fam}/{ds}/{fam}_{ds}_{dt}.tab"
+	params: 
+		sge_opts="-N cn_table -l h_rt=0:10:00 -l mfree=1G", 
+		out_dir = "{fam}/{ds}", 
+		out_file = "{fam}_{ds}_{dt}.tab"
+	resources:
+		mem = 1
+	threads: 1
+	run:
+		sex_info = ds_manifest.loc[wildcards.ds]["sex_info"]
+		genome_index = ds_manifest.loc[wildcards.ds]["genome_index"]
+		input_dir = os.path.dirname(input[0])
+		regions = config["bedfiles"][wildcards.fam]
+		shell("python wssd_sunk/make_ml_output_summary.py --input_dir {input_dir} --input_file_name {wildcards.dt} --input_regions {regions} --sex_pop_index {sex_info} --input_genomes {genome_index} --outdir {params.out_dir} --out_file {params.out_file} --regress")
+
+
+rule convert_genotypes:
+	input: 
+		tab = rules.make_cn_table.output.tab
+	output: 
+		tab = "{fam,\w+}/{fam}.{ds,\w+}.{dt,\w+}.genotypes.tab"
+	params: 
+		sge_opts = "-N convert_gts -l h_rt=0:10:00"
+	resources:
+		mem = 4
+	threads: 1
+	run:
+		pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep=r"\s*", index_col=False)
+		regions = pd.read_csv(config["bedfiles"][wildcards.fam], header = None, sep = r"\s*", index_col=False)
+		regions.columns = ["chr", "start", "end", "name", "score", "strand", "thickStart", "thickEnd", "itemRgb" "blockCount", "blockSizes", "blockStarts"][0:len(regions.columns)]
+		cns = pd.read_csv(input.tab, header = 0, sep = r"\s*", index_col=False)
+		new_cns_cols = cns.columns.tolist()
+		name_mapping_file = str(ds_manifest.loc[wildcards.ds]["name_mapping"])
+		if name_mapping_file not in ["None", "NA", "none", "nan"]:
+			name_mapping = pd.read_csv(name_mapping_file, sep=r"\s*", header=None, index_col=0)
+			for i, col in enumerate(new_cns_cols):
+				if col in name_mapping.index:
+					new_cns_cols[i] = name_mapping.loc[col].tolist()[0]
+
+		cns.columns = new_cns_cols
+		include_samples = [sn for sn in new_cns_cols if sn in pop_file["sample"].tolist()]
+		
+		cns = cns[["chr", "start", "end"] + include_samples]
+		data = regions.merge(cns, on=["chr", "start", "end"])
+		data.to_csv(output.tab, index=False, sep="\t", na_rep = "NA")
+
+
+
+
+rule get_GMM_genotypes:
+	input: 
+		tab = "{fam}/{fam}.{ds}.{dt}.genotypes.tab"
+	output: 
+		tab = "{fam}/{fam}.{ds}.{dt}.GMM.genotypes.tab"
+	params: 
+		sge_opts = "-N GMM -l h_rt=1:00:00", 
+		max_cp = "12"
+	resources:
+		mem = 4
+	threads: 1
+	shell:
+		"python wssd_sunk/get_GMM_genotypes.py {input.tab} {output.tab} --max_cp {params.max_cp}"
+

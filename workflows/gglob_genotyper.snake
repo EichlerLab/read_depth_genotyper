@@ -15,16 +15,16 @@ MAX_CP = 50
 
 CONTIGS = []
 for rs in COORDS:
-    with open(rs, 'r') as regions_file:
-        for line in regions_file:
-            dat = line.rstrip().split()
-            chr = dat[0]
-            if chr not in CONTIGS:
-                CONTIGS.append(chr)
+	with open(rs, 'r') as regions_file:
+		for line in regions_file:
+			dat = line.rstrip().split()
+			chr = dat[0]
+			if chr not in CONTIGS:
+				CONTIGS.append(chr)
 
 REFERENCE = config["reference"]
 
-ds_manifest = pd.read_table(config["datasets_file"], header=0)
+ds_manifest = pd.read_csv(config["datasets_file"], header=0, sep='\t')
 ds_manifest = ds_manifest.ix[ds_manifest.reference == REFERENCE, :]
 ds_manifest.index = ds_manifest.dataset
 
@@ -33,43 +33,64 @@ INIT_MODULES = "source dat/modules.txt"
 DIRS_TO_MAKE = ["log", CHR_OUTPUT_DIR, FINAL_OUTPUT_DIR]
 
 for path in DIRS_TO_MAKE:
-    if not os.path.exists(path):
-        os.makedirs(path)
+	if not os.path.exists(path):
+		os.makedirs(path)
 
 def get_pop_file(wildcards):
-    return config[wildcards.dataset]["pop_file"]
+	return config[wildcards.dataset]["pop_file"]
 
 def get_gglob_from_ds(wildcards):
-    return ds_manifest.loc[wildcards.ds]["gglob_dir"]
+	return ds_manifest.loc[wildcards.ds]["gglob_dir"]
 
 rule genotype:
-    input: expand("{rs}/{rs}.{ds}.{dt}.genotypes.tab", rs = REGION_SETS, ds = DATASETS, dt = DATATYPES)
-    params: sge_opts="-N all_gts"
+	input: 
+		expand("{rs}/{rs}.{ds}.{dt}.genotypes.tab", rs = REGION_SETS, ds = DATASETS, dt = DATATYPES)
+	params: 
+		sge_opts="-N all_gts"
 
 rule get_float_gts:
-    input: "{rs}/%s/all.{ds}.float.{dt}" % FINAL_OUTPUT_DIR
-    output: "{rs}/{rs}.{ds}.{dt}.genotypes.tab"
-    params: "-N cp_gts -l h_rt=0:10:00"
-    shell: "cp {input} {output}"
+	input: 
+		data = "{rs}/%s/all.{ds}.float.{dt}" % FINAL_OUTPUT_DIR
+	output: 
+		"{rs}/{rs}.{ds}.{dt}.genotypes.tab"
+	params: 
+		sge_opts = "-N cp_gts -l h_rt=0:10:00"
+	resources:
+		mem = 2
+	threads: 1
+	shell: 
+		"cp {input} {output}"
 
 rule combine_by_chr:
-    input: expand("{{rs}}/%s/{{ds}}.{chr}.{{method}}.{{dt}}" % CHR_OUTPUT_DIR, chr=CONTIGS)
-    output: "{rs}/%s/all.{ds}.{method}.{dt}" % FINAL_OUTPUT_DIR
-    params: sge_opts = '-l mfree=8G -N combine_all -l h_rt=0:30:00'
-    run:
-        with open(output[0], 'w') as outfile:
-            for infile in input:
-                with open(infile, 'r') as reader:
-                    for line in reader:
-                        outfile.write(line)
-        time.sleep(10)
+	input: 
+		expand("{{rs}}/%s/{{ds}}.{chr}.{{method}}.{{dt}}" % CHR_OUTPUT_DIR, chr=CONTIGS)
+	output: 
+		combined = "{rs}/%s/all.{ds}.{method}.{dt}" % FINAL_OUTPUT_DIR
+	params: 
+		ge_opts = '-l mfree=8G -N combine_all -l h_rt=0:30:00'
+	resources:
+		mem = 8
+	threads: 1
+	run:
+		with open(output.combined, 'w') as outfile:
+			for infile in input:
+				with open(infile, 'r') as reader:
+					for line in reader:
+						outfile.write(line)
+		time.sleep(10)
 
 rule genotype_by_chr:
-    input: get_gglob_from_ds
-    output: "{rs}/%s/{ds}.{chr}.{method}.{dt}" % CHR_OUTPUT_DIR
-    params: sge_opts = "-l mfree=16G -N gt_{ds}_{chr}_{method}_{dt} -l h_rt=4:00:00", max_cp=str(MAX_CP), header_chr = CONTIGS[0]
-    run:
-        regions = config["bedfiles"][wildcards.rs]
-        manifest = ds_manifest[wildcards.ds]["manifest"]
-        shell("{INIT_MODULES}; python wssd_sunk/combine_genotypes.py --regions {regions} --contig {wildcards.chr} --output {output[0]} --gglob_dir {input[0]} --genotype_method {wildcards.method} --data_type {wildcards.dt} --max_cp {params.max_cp} --header_chr {params.header_chr} --manifest {manifest}")
-        shell("touch output")
+	input: get_gglob_from_ds
+	output: "{rs}/%s/{ds}.{chr}.{method}.{dt}" % CHR_OUTPUT_DIR
+	params: 
+		sge_opts = "-l mfree=16G -N gt_{ds}_{chr}_{method}_{dt} -l h_rt=4:00:00", 
+		max_cp=str(MAX_CP), 
+		header_chr = CONTIGS[0]
+	resources:
+		mem = 16
+	threads: 1
+	run:
+		regions = config["bedfiles"][wildcards.rs]
+		manifest = ds_manifest[wildcards.ds]["manifest"]
+		shell("{INIT_MODULES}; python wssd_sunk/combine_genotypes.py --regions {regions} --contig {wildcards.chr} --output {output[0]} --gglob_dir {input[0]} --genotype_method {wildcards.method} --data_type {wildcards.dt} --max_cp {params.max_cp} --header_chr {params.header_chr} --manifest {manifest}")
+		shell("touch output")

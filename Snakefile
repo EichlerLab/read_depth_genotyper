@@ -20,7 +20,7 @@ DATATYPES = config["data_types"]
 MASTER_MANIFEST = config["master_manifest"]
 POP_CODES = config["pop_codes"]
 
-ds_manifest = pd.read_table(config["datasets_file"], header=0)
+ds_manifest = pd.read_csv(config["datasets_file"], header=0, sep='\t')
 ds_manifest = ds_manifest.ix[ds_manifest.reference == REFERENCE, :]
 ds_manifest.index = ds_manifest.dataset
 
@@ -49,7 +49,7 @@ def get_region_names(region_names):
 	return names
 
 def get_coords_and_size_from_name(name, coord_files):
-	 for coord_file in coord_files:
+	for coord_file in coord_files:
 		with open(coord_file, 'r') as reader:
 			for line in reader:
 				dat = line.rstrip().split()
