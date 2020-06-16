@@ -26,11 +26,11 @@ def get_samples_from_ds(wildcards):
 	data.columns = ["sample", "mapping", "bac_analysis", "sequences", "primary_analysis"]
 	return ["%s/%s/%s_%s" % (wildcards.fam, wildcards.ds, wildcards.dt, sn) for sn in data["sample"].unique().tolist()]
 
-localrules: genotype
+localrules: genotype_wssd
 
-rule genotype:
+rule genotype_wssd:
 	input: 
-	expand("{fam}/{fam}.{ds}.{dt}.{gt_type}.tab", fam = REGION_SETS, ds = DATASETS, dt = ["wssd", "sunk"], gt_type = ["genotypes", "GMM.genotypes"])
+		expand("{fam}/{fam}.{ds}.{dt}.{gt_type}.tab", fam=REGION_SETS, ds=DATASETS, dt=["wssd", "sunk"], gt_type=["genotypes", "GMM.genotypes"])
 
 rule do_ml_analysis:
 	input: 
