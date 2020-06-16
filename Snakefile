@@ -69,7 +69,7 @@ localrules: all, get_combined_pdfs, get_tables
 
 rule all:   
 	input:  
-		"{TABLE_DIR}/num_sunks.table.tab",
+		"%s/num_sunks.table.tab" % TABLE_DIR,
 		expand("%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES, file_type = config["plot_file_type"]),
 		expand("%s/violin/{fam_name}.{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR), fam_name = get_region_names(REGION_NAMES), dataset = config["main_dataset"], datatype = DATATYPES, file_type = config["plot_file_type"]),
 		expand("%s/{fam}.{plottype}_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, plottype=["violin", "scatter", "superpop"], datatype = DATATYPES),
@@ -198,7 +198,7 @@ rule get_long_table:
 	input: 
 		regions = "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
 	output: 
-		tab = "{TABLE_DIR}/{fam}.{dataset}.{datatype}.genotypes.df"
+		tab = "%s/{fam}.{dataset}.{datatype}.genotypes.df" % TABLE_DIR
 	params: 
 		sge_opts = "-l mfree=8G -N make_long_table -l h_rt=0:30:00"
 	resources:
