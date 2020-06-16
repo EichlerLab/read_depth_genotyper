@@ -4,7 +4,7 @@ import pandas as pd
 
 SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 
-configfile: "config.yaml"
+configfile: "rdg_config.yaml"
 
 shell.prefix("source {0}/env.cfg; export PYTHONPATH=$PYTHONPATH:{0}/wssd_sunk:{0}/ssf_DTS_caller; ".format(SNAKEMAKE_DIR))
 
@@ -138,7 +138,11 @@ rule get_cn_sunk_variance:
 rule get_sunks:
 	input: COORDS
 	output: "%s/num_sunks.table.tab" % (TABLE_DIR)
-	params: sge_opts = "-l mfree=2G -N get_SUNKs -l h_rt=0:30:00", sunks = config["ref_files"][REFERENCE]["sunk_bed"]
+	params: 
+		sge_opts = "-l mfree=2G -N get_SUNKs -l h_rt=0:30:00", sunks = config["ref_files"][REFERENCE]["sunk_bed"]
+	resources:
+		mem=2
+	threads: 1
 	run:
 		for i, coords in enumerate(COORDS):
 			if i == 0:
@@ -155,6 +159,9 @@ rule plot_gene_grams:
 	output: 
 		"%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR)
 	params: sge_opts = "-l mfree=8G -N gene_grams -l h_rt=0:30:00"
+	resources:
+		mem = 8
+	threads: 1
 	run:
 		manifest = ds_manifest.loc[wildcards.dataset]["manifest"]
 		shell("""python scripts/gene_gram.py {input.bed}{manifest} {PLOT_DIR}/gene_grams/{wildcards.fam}_{wildcards.dataset}_{wildcards.datatype} --plot_type {wildcards.file_type} --spp {SPP} {GENE_GRAM_SETTINGS}""")
@@ -166,6 +173,9 @@ rule combine_violin_pdfs:
 	input: expand("%s/{plottype}/{fam_name}.{dataset}_{plottype}_{datatype}.pdf" % (PLOT_DIR), plottype = ["violin", "scatter", "superpop"], fam_name = get_region_names(REGION_NAMES), dataset = config["main_dataset"], datatype = DATATYPES)
 	output: "%s/{fam}.violin_{datatype}.pdf" % PLOT_DIR, "%s/{fam}.scatter_{datatype}.pdf" % PLOT_DIR, "%s/{fam}.superpop_{datatype}.pdf" % PLOT_DIR
 	params: sge_opts = "-l mfree=8G -N pdf_combine -l h_rt=0:30:00"
+	resources: 
+		mem = 8
+	threads: 1
 	run:
 		for pt in ["violin", "scatter", "superpop"]:
 			outfile = [file for file in output if pt in file][0]
@@ -181,6 +191,9 @@ rule plot_violins:
 	params: 
 		sge_opts = "-l mfree=8G -N plot_violins -l h_rt=0:10:00",
 		max_cp = "7"
+	resources:
+		mem = 8
+	threads: 1
 	run:
 		fam, name = wildcards.fam_name.split(".")[0], ".".join(wildcards.fam_name.split(".")[1:])
 		input_table = [file for file in input.df if fam in file and wildcards.dataset in file][0]

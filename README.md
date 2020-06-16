@@ -4,10 +4,10 @@ Get genotypes for regions using WSSD and SUNK
 ## Install
 `git clone --recursive https://github.com/EichlerLab/read_depth_genotyper.git`
 
-`alias snakesub_sge='mkdir -p log; snakemake --ri -k --jobname "{rulename}.{jobid}" --drmaa " -V -cwd -j y -o ./log -e ./log {params.sge_opts} -w n -S /bin/bash" -w 60'`
+`alias snakesub='mkdir -p log; snakemake -p --ri --jobname "{rulename}.{jobid}" --drmaa " -P eichlerlab -q eichler-short.q -l h_rt=48:00:00  -l mfree={resources.mem}G -pe serial {threads} -R y -V -cwd -S /bin/bash " --drmaa-log-dir $PWD/log --latency-wait 60'`
 
 ## Genotype
-`snakesub_sge -j [max_jobs] -T get_tables`
+`snakesub -j [max_jobs] get_tables`
 
 ## Plot
-`snakesub_sge -T -j [max_jobs]`
+`snakesub -j [max_jobs]`
