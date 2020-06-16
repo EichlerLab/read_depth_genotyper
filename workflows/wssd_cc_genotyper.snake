@@ -46,7 +46,7 @@ rule do_ml_analysis:
 	run:
 		contigs_file = config["ref_files"][REFERENCE]["contigs"]
 		regions = config["bedfiles"][wildcards.fam]
-		if params.dt == "wssd":
+		if wildcards.dt == "wssd":
 			mask_file = config["ref_files"][REFERENCE]["wssd_mask"]
 			param_file = "_filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim0-ed-all.per_bac_params"
 			additional_args = ""
