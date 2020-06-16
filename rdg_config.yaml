@@ -5,7 +5,7 @@ data_types:
     - wssd
     - sunk
 bedfiles: 
-    TCAF: dat/regions.bed
+    TCAF: regions.bed
 datasets: 
     - hgdp
     - archaics
