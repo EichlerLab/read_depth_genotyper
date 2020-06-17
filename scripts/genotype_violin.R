@@ -1,6 +1,7 @@
 library(ggplot2)
 library(gridExtra)
 
+
 g_legend <- function(a.gplot) {
     tmp <- ggplot_gtable(ggplot_build(a.gplot))
     leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
@@ -14,6 +15,7 @@ output.prefix <- args[2]
 region.name <- args[3]
 output.type <- args[4]
 plot.title <- args[5]
+
 
 include_violin = "violin" %in% args
 super_pop_only = "super_pop_only" %in% args
@@ -29,9 +31,9 @@ filt.copy_nums <- copy_nums[copy_nums$name==region.name,]
 
 filt.copy_nums$code = gsub("_", " ", filt.copy_nums$code)
 
-sp.summary <- summary(unique(data.frame(sample=filt.copy_nums$sample, var_col=filt.copy_nums$code))$var_col)
+sp.summary <- summary(as.factor(unique(data.frame(sample=filt.copy_nums$sample, var_col=filt.copy_nums$code))$var_col))
 sp_labels <- paste0(names(sp.summary), " (", sp.summary, ")")
-sp.summary <- data.frame(sp.summary)
+sp.summary <- data.frame(as.array(sp.summary))
 sp.summary$string <- sp_labels
 sp.summary$code <- rownames(sp.summary)
 
@@ -76,12 +78,12 @@ p2 <- ggplot(sorted.copy_nums, aes(x=pop, y=copy_num)) +
 
 if(include_violin) {
 	p1 <- ggplot(sorted.copy_nums, aes(x=code, y=copy_num, colour=code)) + 
-    geom_violin() + geom_point(alpha=0.5, solid=T, size=1.5, position = position_jitter(h = 0, w=0.1)) + 
+    geom_violin() + geom_point(alpha=0.5, size=1.5, position = position_jitter(h = 0, w=0.1)) + 
     theme_bw() + coord_flip() + xlab(xlab) + ylab(ylab) + theme(legend.position="none") + 
     scale_y_continuous(breaks=breaks, limits=c(-0.5, max.count + 0.5), minor_breaks=c())
 } else {
 	p1 <- ggplot(sorted.copy_nums, aes(x=code, y=copy_num, fill=code)) + 
-    geom_point(alpha=0.5, colour='black', solid=T, size=1, position = position_jitter(h = 0, w=0.1)) + 
+    geom_point(alpha=0.5, colour='black', size=1, position = position_jitter(h = 0, w=0.1)) + 
     theme_bw() + coord_flip() + xlab(xlab) + ylab(ylab) + theme(legend.position="none") + 
     scale_y_continuous(breaks=breaks, limits=c(-0.5, max.count + 0.5), minor_breaks=c())
 }
@@ -89,19 +91,19 @@ if(include_violin) {
 if(super_pop_only) {
   if(output.type == "pdf") {
 	  pdf(output.prefix, width=12, height=3)
-	  grid.arrange(p1, main=plot.title)
+	  grid.arrange(p1, top=plot.title)
 	  dev.off()
   } else if(output.type == "png") {
   png(output.prefix, width=800, height=200)
-  grid.arrange(p1, main=plot.title)
+  grid.arrange(p1, top=plot.title)
   dev.off()
   } else print(paste("Unsupported file type", output.type))
 } else if(output.type == "pdf") {
     pdf(output.prefix, width=12, height=3*3)
-    grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(4/5, 1/5), main=plot.title)
+    grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(4/5, 1/5), top=plot.title)
     dev.off()
 } else if(output.type == "png") {
 png(output.prefix, width=800, height=200*3)
-grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(4/5, 1/5), main=plot.title)
+grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(4/5, 1/5), top=plot.title)
 dev.off()
 } else print(paste("Unsupported file type", output.type))

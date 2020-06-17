@@ -37,6 +37,11 @@ for folder in DIRS_TO_MAKE:
 	if not os.path.exists(folder):
 		os.makedirs(folder)
 
+
+wildcard_constraints:
+	dataset='|'.join(DATASETS),
+	datatype='|'.join(DATATYPES)
+
 GENE_GRAM_SETTINGS = config.get("gene_gram_settings", "")
 SPP = config.get("spp", 500)
 
@@ -73,7 +78,7 @@ rule all:
 		expand("%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES, file_type = config["plot_file_type"]),
 		expand("%s/violin/{fam_name}.{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR), fam_name = get_region_names(REGION_NAMES), dataset = config["main_dataset"], datatype = DATATYPES, file_type = config["plot_file_type"]),
 		expand("%s/{fam}.{plottype}_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, plottype=["violin", "scatter", "superpop"], datatype = DATATYPES),
-		expand("{fam}/{fam}.{ds}.combined.{dt}.GMM.bed", fam = REGION_NAMES, ds = DATASETS, dt = DATATYPES)
+		expand("{fam}/{fam}.{dataset}.combined.{datatype}.GMM.bed", fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
 
 rule get_cn_wssd_variance:
 	input:  
@@ -164,7 +169,7 @@ rule plot_gene_grams:
 	threads: 1
 	run:
 		manifest = ds_manifest.loc[wildcards.dataset]["manifest"]
-		shell("""python scripts/gene_gram.py {input.bed}{manifest} {PLOT_DIR}/gene_grams/{wildcards.fam}_{wildcards.dataset}_{wildcards.datatype} --plot_type {wildcards.file_type} --spp {SPP} {GENE_GRAM_SETTINGS}""")
+		shell("""python scripts/gene_gram.py {input.bed} {manifest} {PLOT_DIR}/gene_grams/{wildcards.fam}_{wildcards.dataset}_{wildcards.datatype} --plot_type {wildcards.file_type} --spp {SPP} {GENE_GRAM_SETTINGS}""")
 
 rule get_combined_pdfs:
 	input: expand("%s/{fam}/violin_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, datatype = DATATYPES)
@@ -219,7 +224,7 @@ rule get_long_table:
 	threads: 1
 	shell:
 		'''
-		Rscript scripts/transform_genotypes.R {input.regions} {MASTER_MANIFEST} {POP_CODES} {wildcards.dataset} {output.tab}")
+		Rscript scripts/transform_genotypes.R {input.regions} {MASTER_MANIFEST} {POP_CODES} {wildcards.dataset} {output.tab}
 		'''
 
 rule get_combined_GMM_genotypes:
@@ -240,7 +245,7 @@ rule get_combined_GMM_genotypes:
 
 rule combine_genotypes:
 	input: 
-		tab = expand("{{fam}}/{{fam}}.{ds}.{{datatype}}.genotypes.tab", ds = DATASETS)
+		tab = expand("{{fam}}/{{fam}}.{dataset}.{{datatype}}.genotypes.tab", dataset = DATASETS)
 	output: 
 		bed = "{fam}/{fam}.{dataset}.combined.{datatype,\w+}.bed"
 	params: 
@@ -254,6 +259,6 @@ rule combine_genotypes:
 		if config["append_dataset"] is not None:
 			for app_ds in config["append_dataset"]:
 				if app_ds != wildcards.dataset:
-					append_dataset = pd.read_csv("{fam}/{fam}.{app_ds}.{dt}.genotypes.tab".format(fam=wildcards.fam, app_ds=app_ds, dt=wildcards.datatype), header=0, sep='\t', index_col=False)
+					append_dataset = pd.read_csv("{fam}/{fam}.{app_ds}.{datatype}.genotypes.tab".format(fam=wildcards.fam, app_ds=app_ds, datatype=wildcards.datatype), header=0, sep='\t', index_col=False)
 					main_ds = main_ds.merge(append_dataset, on=["chr", "start", "end", "name"])
 		main_ds.to_csv(output.bed, index=False, sep='\t', na_rep='NA')

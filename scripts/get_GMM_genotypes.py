@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    dat = pd.read_table(args.genotypes)
+    dat = pd.read_csv(args.genotypes, sep='\t')
     bed_header = ["chr", "start", "end", "name", "score", "strand", "thickStart", "thickEnd", "itemRgb"]
     of_bed_cols = ["chr", "start", "end", "name"]
     indivs = [col for col in dat.columns if col not in bed_header]

@@ -28,7 +28,7 @@ def get_cns_fclust(df_link, fclust_threshold):
 def reorder_df_samples(df, cns, df_link):
     df_leaves = sch.dendrogram(df_link, labels = cns.index, no_plot=True, distance_sort="descending")['leaves']
     sample_order = [cns.index[i] for i in df_leaves]
-    print df.columns
+    print(df.columns)
     df_new = df[["chr", "start", "end", "name"] + sample_order]
     return df_new
 
@@ -199,9 +199,9 @@ if __name__ == "__main__":
     parser.add_argument("--include_coords", action="store_true", help="Annotate regions with genomic coordinates")
     args = parser.parse_args()
 
-    df = pd.read_table(args.input_file, na_values="NA").dropna()
-    pop_info = pd.read_table(args.pop_file)
-    pop_info.sort(columns=["super_pop", "pop"], inplace=True, axis=0)
+    df = pd.read_csv(args.input_file, na_values="NA", sep='\t').dropna()
+    pop_info = pd.read_csv(args.pop_file, sep='\t')
+    pop_info.sort_values(by=["super_pop", "pop"], inplace=True)
 
     sample_order = [sample for sample in pop_info["sample"] if sample in df.columns]
 
@@ -215,7 +215,7 @@ if __name__ == "__main__":
 
     df = df[["chr", "start", "end", "name"] + sample_order]
     df["name"] = df.name.map(lambda x: "_".join(sorted(x.split(","))))
-    df.sort(columns=["name"], inplace=True, axis=0)
+    df.sort_values(by=["name"], inplace=True)
     df.index = df.name
 
     sample_names = not args.exclude_sample_names
@@ -233,7 +233,7 @@ if __name__ == "__main__":
     if args.fclust_threshold is not None:
         cns_fclust = get_cns_fclust(df_link, args.fclust_threshold)
         cns_fclust = pd.DataFrame(data={"sample": cns.index, "cluster": cns_fclust})
-        cns_fclust.sort(inplace=True, columns="cluster")
+        cns_fclust.sort_values(inplace=True, by="cluster")
         cns_fclust.to_csv(args.output_file_prefix + ".tab", index=False, sep="\t")
 
     for i in range(nplots):
