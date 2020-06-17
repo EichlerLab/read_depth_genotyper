@@ -205,9 +205,9 @@ rule plot_violins:
 		dat = pd.read_csv(input_table, sep='\t')
 		(coords, size) = get_coords_and_size_from_name(name, COORDS)
 		title = "_".join([name, coords, size, config["reference"], wildcards.dataset, wildcards.datatype])
-		shell("""Rscript scripts/genotype_violin.R {input_table} {output.violin} {name} {wildcards.file_type} {title} 3 violin super_pop_only --max_cp {params.max_cp}""")
-		shell("""Rscript scripts/genotype_violin.R {input_table} {output.scatter} {name} {wildcards.file_type} {title} 3 --max_cp {params.max_cp}""")
-		shell("""Rscript scripts/genotype_violin.R {input_table} {output.superpop} {name} {wildcards.file_type} {title} 3 super_pop_only --max_cp {params.max_cp};""")
+		shell("""Rscript scripts/genotype_violin.R {input_table} {output.violin} {name} {wildcards.file_type} {title} 3 violin super_pop_only""")
+		shell("""Rscript scripts/genotype_violin.R {input_table} {output.scatter} {name} {wildcards.file_type} {title} 3""")
+		shell("""Rscript scripts/genotype_violin.R {input_table} {output.superpop} {name} {wildcards.file_type} {title} 3 super_pop_only""")
 
 rule get_tables:
 	input: expand("%s/{fam}.{dataset}.{datatype}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
