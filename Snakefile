@@ -29,9 +29,9 @@ DIRS_TO_MAKE = ["log", TABLE_DIR, PLOT_DIR]
 genotyper = config.get("genotyper")
 
 if genotyper == "wssd_cc":
-	include: "workflows/wssd_cc_genotyper.snake"
+	include: "{SNAKEMAKE_DIR}/workflows/wssd_cc_genotyper.snake"
 elif genotyper == "gglob":
-	include: "workflows/gglob_genotyper.snake"
+	include: "{SNAKEMAKE_DIR}/workflows/gglob_genotyper.snake"
 
 for folder in DIRS_TO_MAKE:
 	if not os.path.exists(folder):
