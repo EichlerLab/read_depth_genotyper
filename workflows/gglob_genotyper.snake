@@ -13,6 +13,9 @@ REGION_SETS = list(config["bedfiles"].keys())
 DATATYPES = config["data_types"]
 MAX_CP = 50
 
+SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
+
+
 CONTIGS = []
 for rs in COORDS:
 	with open(rs, 'r') as regions_file:

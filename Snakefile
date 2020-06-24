@@ -151,10 +151,10 @@ rule get_sunks:
 	run:
 		for i, coords in enumerate(COORDS):
 			if i == 0:
-				shell("""module load bedtools/2.21.0; bedtools intersect -a {coords} -b {params.sunks} -wao | groupBy -g 1,2,3,4 -c 6,6 -o first,count | 
+				shell("""bedtools intersect -a {coords} -b {params.sunks} -wao | groupBy -g 1,2,3,4 -c 6,6 -o first,count | 
 						 awk 'OFS="\t" {{print $1, $2, $3, $4, $3-$2, $5 != "-1" ? $6 : 0}}' > {output[0]}""")
 			else:
-				shell("""module load bedtools/2.21.0; bedtools intersect -a {coords} -b {params.sunks} -wao | groupBy -g 1,2,3,4 -c 6,6 -o first,count | 
+				shell("""bedtools intersect -a {coords} -b {params.sunks} -wao | groupBy -g 1,2,3,4 -c 6,6 -o first,count | 
 						 awk 'OFS="\t" {{print $1, $2, $3, $4, $3-$2, $5 != "-1" ? $6 : 0}}' >> {output[0]}""")
 		shell("""sed -i '1ichr\tstart\tend\tname\tsize\tnSUNKs' {output[0]}""")
 
@@ -169,7 +169,7 @@ rule plot_gene_grams:
 	threads: 1
 	run:
 		manifest = ds_manifest.loc[wildcards.dataset]["manifest"]
-		shell("""python scripts/gene_gram.py {input.bed} {manifest} {PLOT_DIR}/gene_grams/{wildcards.fam}_{wildcards.dataset}_{wildcards.datatype} --plot_type {wildcards.file_type} --spp {SPP} {GENE_GRAM_SETTINGS}""")
+		shell("""python {SNAKEMAKE_DIR}/scripts/gene_gram.py {input.bed} {manifest} {PLOT_DIR}/gene_grams/{wildcards.fam}_{wildcards.dataset}_{wildcards.datatype} --plot_type {wildcards.file_type} --spp {SPP} {GENE_GRAM_SETTINGS}""")
 
 rule get_combined_pdfs:
 	input: expand("%s/{fam}/violin_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, datatype = DATATYPES)
@@ -205,9 +205,9 @@ rule plot_violins:
 		dat = pd.read_csv(input_table, sep='\t')
 		(coords, size) = get_coords_and_size_from_name(name, COORDS)
 		title = "_".join([name, coords, size, config["reference"], wildcards.dataset, wildcards.datatype])
-		shell("""Rscript scripts/genotype_violin.R {input_table} {output.violin} {name} {wildcards.file_type} {title} 3 violin super_pop_only""")
-		shell("""Rscript scripts/genotype_violin.R {input_table} {output.scatter} {name} {wildcards.file_type} {title} 3""")
-		shell("""Rscript scripts/genotype_violin.R {input_table} {output.superpop} {name} {wildcards.file_type} {title} 3 super_pop_only""")
+		shell("""Rscript {SNAKEMAKE_DIR}/scripts/genotype_violin.R {input_table} {output.violin} {name} {wildcards.file_type} {title} 3 violin super_pop_only""")
+		shell("""Rscript {SNAKEMAKE_DIR}/scripts/genotype_violin.R {input_table} {output.scatter} {name} {wildcards.file_type} {title} 3""")
+		shell("""Rscript {SNAKEMAKE_DIR}/scripts/genotype_violin.R {input_table} {output.superpop} {name} {wildcards.file_type} {title} 3 super_pop_only""")
 
 rule get_tables:
 	input: expand("%s/{fam}.{dataset}.{datatype}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
@@ -224,7 +224,7 @@ rule get_long_table:
 	threads: 1
 	shell:
 		'''
-		Rscript scripts/transform_genotypes.R {input.regions} {MASTER_MANIFEST} {POP_CODES} {wildcards.dataset} {output.tab}
+		Rscript {SNAKEMAKE_DIR}/scripts/transform_genotypes.R {input.regions} {MASTER_MANIFEST} {POP_CODES} {wildcards.dataset} {output.tab}
 		'''
 
 rule get_combined_GMM_genotypes:
@@ -240,7 +240,7 @@ rule get_combined_GMM_genotypes:
 	threads: 1
 	shell:
 		'''
-		python scripts/get_GMM_genotypes.py {input.bed} {output.bed} --max_cp {params.max_cp}
+		python {SNAKEMAKE_DIR}/scripts/get_GMM_genotypes.py {input.bed} {output.bed} --max_cp {params.max_cp}
 		'''
 
 rule combine_genotypes:
