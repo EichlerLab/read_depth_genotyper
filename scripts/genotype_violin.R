@@ -16,6 +16,7 @@ region.name <- args[3]
 output.type <- args[4]
 plot.title <- args[5]
 
+pdf(NULL)
 
 include_violin = "violin" %in% args
 super_pop_only = "super_pop_only" %in% args
