@@ -23,7 +23,7 @@ if __name__ == "__main__":
         gs = gts.simple_genotyper()
 
         for i, row in dat.iterrows():
-            X = map(float, row[indivs])
+            X = list(map(float, row[indivs]))
             GMM_cps = gs.simple_GMM_genotype(X, max_cp = args.max_cp)
             of_line = map(str, row[of_bed_cols].tolist() + GMM_cps)
             of.write("\t".join(of_line) + "\n")
