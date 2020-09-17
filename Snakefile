@@ -205,9 +205,9 @@ rule plot_violins:
 		dat = pd.read_csv(input_table, sep='\t')
 		(coords, size) = get_coords_and_size_from_name(name, COORDS)
 		title = "_".join([name, coords, size, config["reference"], wildcards.dataset, wildcards.datatype])
-		shell("""Rscript {SNAKEMAKE_DIR}/scripts/genotype_violin.R {input_table} {output.violin} {name} {wildcards.file_type} {title} 3 violin super_pop_only""")
-		shell("""Rscript {SNAKEMAKE_DIR}/scripts/genotype_violin.R {input_table} {output.scatter} {name} {wildcards.file_type} {title} 3""")
-		shell("""Rscript {SNAKEMAKE_DIR}/scripts/genotype_violin.R {input_table} {output.superpop} {name} {wildcards.file_type} {title} 3 super_pop_only""")
+		shell("""python {SNAKEMAKE_DIR}/scripts/genotype_violin.py --input_table {input_table} --output_name {output.violin} --region_name {name}  --file_type {wildcards.file_type} --title {title} --violin --super_pop_only""")
+		shell("""python {SNAKEMAKE_DIR}/scripts/genotype_violin.py --input_table {input_table} --output_name {output.scatter} --region_name {name} --file_type {wildcards.file_type} --title {title}""")
+		shell("""python {SNAKEMAKE_DIR}/scripts/genotype_violin.py --input_table {input_table} --output_name {output.superpop} --region_name {name} --file_type {wildcards.file_type} --title {title} --super_pop_only""")
 
 rule get_tables:
 	input: expand("%s/{fam}.{dataset}.{datatype}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
