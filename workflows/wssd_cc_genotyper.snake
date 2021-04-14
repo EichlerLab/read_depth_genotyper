@@ -41,7 +41,8 @@ rule do_ml_analysis:
 		sge_opts="-N ml_analysis -l h_rt=4:0:00 -l mfree=2G", 
 		out_dir = "{fam}/{ds}"
 	resources:
-		mem = 2
+		mem = 2,
+		hrs = 1
 	threads: 1
 	run:
 		contigs_file = config["ref_files"][REFERENCE]["contigs"]
@@ -68,7 +69,8 @@ rule make_cn_table:
 		out_dir = "{fam}/{ds}", 
 		out_file = "{fam}_{ds}_{dt}.tab"
 	resources:
-		mem = 1
+		mem = 1,
+		hrs = 4
 	threads: 1
 	run:
 		sex_info = ds_manifest.loc[wildcards.ds]["sex_info"]
@@ -86,17 +88,18 @@ rule convert_genotypes:
 	params: 
 		sge_opts = "-N convert_gts -l h_rt=0:10:00"
 	resources:
-		mem = 4
+		mem = 4,
+		hrs = 4
 	threads: 1
 	run:
-		pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep=r"\s*", index_col=False)
-		regions = pd.read_csv(config["bedfiles"][wildcards.fam], header = None, sep = r"\s*", index_col=False)
+		pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep="\s+", index_col=False)
+		regions = pd.read_csv(config["bedfiles"][wildcards.fam], header = None, sep = "\s+", index_col=False)
 		regions.columns = ["chr", "start", "end", "name", "score", "strand", "thickStart", "thickEnd", "itemRgb" "blockCount", "blockSizes", "blockStarts"][0:len(regions.columns)]
-		cns = pd.read_csv(input.tab, header = 0, sep = r"\s*", index_col=False)
+		cns = pd.read_csv(input.tab, header = 0, sep = "\s+", index_col=False)
 		new_cns_cols = cns.columns.tolist()
 		name_mapping_file = str(ds_manifest.loc[wildcards.ds]["name_mapping"])
 		if name_mapping_file not in ["None", "NA", "none", "nan"]:
-			name_mapping = pd.read_csv(name_mapping_file, sep=r"\s*", header=None, index_col=0)
+			name_mapping = pd.read_csv(name_mapping_file, sep="\s+", header=None, index_col=0)
 			for i, col in enumerate(new_cns_cols):
 				if col in name_mapping.index:
 					new_cns_cols[i] = name_mapping.loc[col].tolist()[0]
@@ -120,8 +123,10 @@ rule get_GMM_genotypes:
 		sge_opts = "-N GMM -l h_rt=1:00:00", 
 		max_cp = "12"
 	resources:
-		mem = 4
+		mem = 4,
+		hrs = 4
 	threads: 1
 	shell:
 		"python {SNAKEMAKE_DIR}/wssd_sunk/get_GMM_genotypes.py {input.tab} {output.tab} --max_cp {params.max_cp}"
+
 

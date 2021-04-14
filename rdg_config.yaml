@@ -36,3 +36,8 @@ ref_files:
         wssd_mask: /net/eichler/vol26/eee_shared/assemblies/hg38/legacy/read_depth/illumina/hg38_noWM_pad36
         sunk_mask: /net/eichler/vol26/eee_shared/assemblies/hg38/legacy/read_depth/illumina/hg38_sunk_mask_track_pad36_e0.dts
         sunk_bed: /net/eichler/vol26/eee_shared/assemblies/hg38/legacy/sunks/suns.no_repeats_36bp_flanking.bed
+    chm13_v1.0:
+        contigs: /net/eichler/vol26/projects/chm13_t2t/nobackups/wssd/v1.0/chromInfo.txt
+        wssd_mask: /net/eichler/vol26/projects/chm13_t2t/nobackups/wssd/v1.0/hardmask/chm13_v1.0.hard.repeatmasked.trf.dts
+        sunk_mask: /net/eichler/vol26/projects/chm13_t2t/nobackups/wssd/v1.0/sunks/chm13_v1.0_sunk_mask_track_pad36_e0.dts
+        sunk_bed: /net/eichler/vol26/projects/chm13_t2t/nobackups/wssd/v1.0/suns_chm13/suns.no_repeats_36bp_flanking.bed

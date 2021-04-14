@@ -20,6 +20,7 @@ DATATYPES = config["data_types"]
 MASTER_MANIFEST = config["master_manifest"]
 POP_CODES = config["pop_codes"]
 
+
 ds_manifest = pd.read_csv(config["datasets_file"], header=0, sep='\t')
 ds_manifest = ds_manifest.ix[ds_manifest.reference == REFERENCE, :]
 ds_manifest.index = ds_manifest.dataset
@@ -29,9 +30,9 @@ DIRS_TO_MAKE = ["log", TABLE_DIR, PLOT_DIR]
 genotyper = config.get("genotyper")
 
 if genotyper == "wssd_cc":
-	include: "{SNAKEMAKE_DIR}/workflows/wssd_cc_genotyper.snake"
+	include: "workflows/wssd_cc_genotyper.snake"
 elif genotyper == "gglob":
-	include: "{SNAKEMAKE_DIR}/workflows/gglob_genotyper.snake"
+	include: "workflows/gglob_genotyper.snake"
 
 for folder in DIRS_TO_MAKE:
 	if not os.path.exists(folder):
@@ -40,7 +41,8 @@ for folder in DIRS_TO_MAKE:
 
 wildcard_constraints:
 	dataset='|'.join(DATASETS),
-	datatype='|'.join(DATATYPES)
+	datatype='|'.join(DATATYPES),
+        fam='|'.join(REGION_NAMES)
 
 GENE_GRAM_SETTINGS = config.get("gene_gram_settings", "")
 SPP = config.get("spp", 500)
@@ -87,6 +89,10 @@ rule get_cn_wssd_variance:
 	output: 
 		tab = "%s/wssd_stats_by_family.tab" % (TABLE_DIR)
 	params: sge_opts = "-l mfree=2G -N get_var -l h_rt=1:00:00", families = REGION_NAMES
+	threads: 1
+	resources: 
+		mem=2,
+		hrs=1
 	run:
 		wssd_stats = pd.DataFrame(columns=["name"])
 		datasets = DATASETS
@@ -116,6 +122,10 @@ rule get_cn_sunk_variance:
 			sunks = "%s/num_sunks.table.tab" % (TABLE_DIR)
 	output: "%s/sunk_stats_by_region.tab" % TABLE_DIR
 	params: sge_opts = "-l mfree=2G -N get_var -l h_rt=1:00:00", families = REGION_NAMES
+	threads: 1
+	resources: 
+		mem=2,
+		hrs=1
 	run:
 		sunk_stats = pd.DataFrame(columns = ["name"])
 		names = []
@@ -146,7 +156,8 @@ rule get_sunks:
 	params: 
 		sge_opts = "-l mfree=2G -N get_SUNKs -l h_rt=0:30:00", sunks = config["ref_files"][REFERENCE]["sunk_bed"]
 	resources:
-		mem=2
+		mem=2,
+		hrs=2
 	threads: 1
 	run:
 		for i, coords in enumerate(COORDS):
@@ -165,7 +176,8 @@ rule plot_gene_grams:
 		"%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR)
 	params: sge_opts = "-l mfree=8G -N gene_grams -l h_rt=0:30:00"
 	resources:
-		mem = 8
+		mem = 8,
+		hrs = 1
 	threads: 1
 	run:
 		manifest = ds_manifest.loc[wildcards.dataset]["manifest"]
@@ -179,7 +191,8 @@ rule combine_violin_pdfs:
 	output: "%s/{fam}.violin_{datatype}.pdf" % PLOT_DIR, "%s/{fam}.scatter_{datatype}.pdf" % PLOT_DIR, "%s/{fam}.superpop_{datatype}.pdf" % PLOT_DIR
 	params: sge_opts = "-l mfree=8G -N pdf_combine -l h_rt=0:30:00"
 	resources: 
-		mem = 8
+		mem = 8,
+		hrs = 4
 	threads: 1
 	run:
 		for pt in ["violin", "scatter", "superpop"]:
@@ -197,7 +210,8 @@ rule plot_violins:
 		sge_opts = "-l mfree=8G -N plot_violins -l h_rt=0:10:00",
 		max_cp = "7"
 	resources:
-		mem = 8
+		mem = 8,
+		hrs=1
 	threads: 1
 	run:
 		fam, name = wildcards.fam_name.split(".")[0], ".".join(wildcards.fam_name.split(".")[1:])
@@ -220,28 +234,14 @@ rule get_long_table:
 	params: 
 		sge_opts = "-l mfree=8G -N make_long_table -l h_rt=0:30:00"
 	resources:
-		mem=8
+		mem=8,
+		hrs=4
 	threads: 1
 	shell:
 		'''
 		Rscript {SNAKEMAKE_DIR}/scripts/transform_genotypes.R {input.regions} {MASTER_MANIFEST} {POP_CODES} {wildcards.dataset} {output.tab}
 		'''
 
-rule get_combined_GMM_genotypes:
-	input: 
-		bed = "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
-	output: 
-		bed = "{fam}/{fam}.{dataset}.combined.{datatype}.GMM.bed"
-	params: 
-		sge_opts = "-N GMM -l h_rt=0:30:00", 
-		max_cp = "12"
-	resources:
-		mem = 4
-	threads: 1
-	shell:
-		'''
-		python {SNAKEMAKE_DIR}/scripts/get_GMM_genotypes.py {input.bed} {output.bed} --max_cp {params.max_cp}
-		'''
 
 rule combine_genotypes:
 	input: 
@@ -251,7 +251,8 @@ rule combine_genotypes:
 	params: 
 		sge_opts="-l mfree=2G -N combine_gt -l h_rt=0:30:00"
 	resources:
-		mem = 2
+		mem = 2,
+		hrs=4
 	threads: 1
 	run:
 		fn_main = [x for x in input.tab if wildcards.dataset in x][0]
@@ -262,3 +263,43 @@ rule combine_genotypes:
 					append_dataset = pd.read_csv("{fam}/{fam}.{app_ds}.{datatype}.genotypes.tab".format(fam=wildcards.fam, app_ds=app_ds, datatype=wildcards.datatype), header=0, sep='\t', index_col=False)
 					main_ds = main_ds.merge(append_dataset, on=["chr", "start", "end", "name"])
 		main_ds.to_csv(output.bed, index=False, sep='\t', na_rep='NA')
+
+
+
+# rule get_GMM_genotypes:
+# 	input: 
+# 		bed = "{fam}/{dataset}/{dataset}.{datatype}.genotypes.tab"
+# 	output: 
+# 		bed = "{fam}/{fam}.{dataset}.{datatype}.GMM.bed"
+# 	params: 
+# 		sge_opts = "-N GMM -l h_rt=0:30:00", 
+# 		max_cp = "12"
+# 	resources:
+# 		mem = 4,
+# 		hrs=4
+# 	threads: 1
+# 	shell:
+# 		'''
+# 		python {SNAKEMAKE_DIR}/scripts/get_GMM_genotypes.py {input.bed} {output.bed} --max_cp {params.max_cp}
+# 		'''
+
+rule combine_GMM_genotypes:
+	input:
+		tab = expand("{{fam}}/{{fam}}.{dataset}.{{datatype}}.GMM.genotypes.tab", dataset=DATASETS)
+	output:
+		bed = "{fam}/{fam}.{dataset}.combined.{datatype}.GMM.bed"
+	resources:
+		mem = 2,
+		hrs=4
+	threads: 1
+	run:
+		fn_main = [x for x in input.tab if wildcards.dataset in x][0]
+		main_ds = pd.read_csv(fn_main, na_values='NA', sep='\t', header=0)
+		if config["append_dataset"] is not None:
+			for app_ds in config["append_dataset"]:
+				if app_ds != wildcards.dataset:
+					append_dataset = pd.read_csv("{fam}/{fam}.{app_ds}.{datatype}.GMM.genotypes.tab".format(fam=wildcards.fam, app_ds=app_ds, datatype=wildcards.datatype), header=0, sep='\t', index_col=False)
+					main_ds = main_ds.merge(append_dataset, on=["chr", "start", "end", "name"])
+		main_ds.to_csv(output.bed, index=False, sep='\t', na_rep='NA')
+
+

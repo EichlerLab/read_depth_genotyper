@@ -59,7 +59,8 @@ rule get_float_gts:
 	params: 
 		sge_opts = "-N cp_gts -l h_rt=0:10:00"
 	resources:
-		mem = 2
+		mem = 2,
+		hrs=2
 	threads: 1
 	shell: 
 		"cp {input} {output}"
@@ -72,7 +73,8 @@ rule combine_by_chr:
 	params: 
 		ge_opts = '-l mfree=8G -N combine_all -l h_rt=0:30:00'
 	resources:
-		mem = 8
+		mem = 8,
+		hrs=2
 	threads: 1
 	run:
 		with open(output.combined, 'w') as outfile:
@@ -90,10 +92,12 @@ rule genotype_by_chr:
 		max_cp=str(MAX_CP), 
 		header_chr = CONTIGS[0]
 	resources:
-		mem = 16
+		mem = 16,
+		hrs = 4
 	threads: 1
 	run:
 		regions = config["bedfiles"][wildcards.rs]
 		manifest = ds_manifest[wildcards.ds]["manifest"]
 		shell("{INIT_MODULES}; python wssd_sunk/combine_genotypes.py --regions {regions} --contig {wildcards.chr} --output {output[0]} --gglob_dir {input[0]} --genotype_method {wildcards.method} --data_type {wildcards.dt} --max_cp {params.max_cp} --header_chr {params.header_chr} --manifest {manifest}")
 		shell("touch output")
+
