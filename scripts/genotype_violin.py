@@ -137,9 +137,9 @@ else:
             palette=color_dict,
             alpha=0.5,
         )
+        plt.xticks(ticks=range(0, int(max(filt_copy_nums["copy_num"]))+2))
         plt.xlim(xmin=-0.5, xmax=max(filt_copy_nums["copy_num"]) + 0.5)
         plt.ylabel("Super Population")
-        plt.xticks(ticks=range(0, int(max(filt_copy_nums["copy_num"]))))
         plt.title(args.title)
         plt.xlabel("Copy Number")
         plt.legend(bbox_to_anchor=(1.01, 1), loc="upper left", ncol=1)
@@ -154,8 +154,8 @@ else:
             color="0.0",
             alpha=0.5,
         )
+        plt.xticks(ticks=range(0, int(max(filt_copy_nums["copy_num"]))+2))
         plt.xlim(xmin=-0.5, xmax=max(filt_copy_nums["copy_num"]) + 0.5)
-        plt.xticks(ticks=range(0, int(max(filt_copy_nums["copy_num"]))))
         plt.ylabel("Super Population")
         plt.title(args.title)
         plt.xlabel("Copy Number")
@@ -173,6 +173,7 @@ else:
             alpha=0.5,
             ax=ax[0],
         )
+        ax[0].set_xticks(ticks=range(0, int(max(filt_copy_nums["copy_num"]))+2))
         ax[0].set_xlim(xmin=-0.5, xmax=max(filt_copy_nums["copy_num"]) + 0.5)
         ax[0].set_ylabel("Super Population")
         ax[0].set_xlabel("Copy Number")
@@ -185,6 +186,7 @@ else:
             alpha=0.5,
             ax=ax[1],
         )
+        ax[1].set_xticks(ticks=range(0, int(max(filt_copy_nums["copy_num"]))+2))
         ax[1].set_xlim(xmin=-0.5, xmax=max(filt_copy_nums["copy_num"]) + 0.5)
         ax[1].set_ylabel("Population")
         ax[1].set_xlabel("Copy Number")
