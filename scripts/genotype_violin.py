@@ -192,4 +192,4 @@ else:
         ax[0].grid(True)
         ax[1].grid(True)
 
-plt.savefig(args.output_name, type=args.file_type)
+plt.savefig(args.output_name, format=args.file_type)
