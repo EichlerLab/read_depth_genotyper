@@ -1,10 +1,12 @@
 import pandas as pd
 import os
 
-SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
-SCRIPT_DIR = SNAKEMAKE_DIR + "/../wssd_sunk"
+# SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
+SCRIPT_DIR = SNAKEMAKE_DIR + "/wssd_sunk"
 
-shell.prefix("source {0}/env.cfg; export PYTHONPATH=$PYTHONPATH:{0}/wssd_sunk:{0}/ssf_DTS_caller; ".format(SNAKEMAKE_DIR))
+
+
+# shell.prefix("source {0}/env.cfg; export PYTHONPATH=$PYTHONPATH:{0}/wssd_sunk:{0}/ssf_DTS_caller; ".format(SNAKEMAKE_DIR))
 
 COORDS = list(config.get("bedfiles").values())
 REGION_SETS = list(config["bedfiles"].keys())
@@ -13,8 +15,9 @@ REFERENCE = config["reference"]
 DATASETS = config["datasets"]
 
 ds_manifest = pd.read_csv(config["datasets_file"], header=0, sep='\t')
-ds_manifest = ds_manifest.ix[ds_manifest.reference == REFERENCE, :]
-ds_manifest.index = ds_manifest.dataset
+ds_manifest = ds_manifest.loc[ds_manifest["reference"] == REFERENCE]
+ds_manifest = ds_manifest.set_index("dataset", drop=False)
+
 
 def get_input_files_from_ds_name(wildcards):
 	ds_dat = ds_manifest.loc[wildcards.ds]

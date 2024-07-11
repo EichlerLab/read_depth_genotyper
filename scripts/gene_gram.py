@@ -211,7 +211,7 @@ if __name__ == "__main__":
         spp = args.spp
 
     pop_info.index = pop_info["sample"]
-    pop_info = pop_info.ix[sample_order, :]
+    pop_info = pop_info.loc[sample_order]
 
     df = df[["chr", "start", "end", "name"] + sample_order]
     df["name"] = df.name.map(lambda x: "_".join(sorted(x.split(","))))

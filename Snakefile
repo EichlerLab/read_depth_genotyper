@@ -6,7 +6,7 @@ SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 
 configfile: "rdg_config.yaml"
 
-shell.prefix("source {0}/env.cfg; export PYTHONPATH=$PYTHONPATH:{0}/wssd_sunk:{0}/ssf_DTS_caller; ".format(SNAKEMAKE_DIR))
+shell.prefix("export PYTHONPATH=$PYTHONPATH:{0}/wssd_sunk:{0}/ssf_DTS_caller; ".format(SNAKEMAKE_DIR))
 
 COORDS = list(config.get("bedfiles").values())
 REGION_NAMES = list(config.get("bedfiles").keys())
@@ -22,8 +22,8 @@ POP_CODES = config["pop_codes"]
 
 
 ds_manifest = pd.read_csv(config["datasets_file"], header=0, sep='\t')
-ds_manifest = ds_manifest.ix[ds_manifest.reference == REFERENCE, :]
-ds_manifest.index = ds_manifest.dataset
+ds_manifest = ds_manifest.loc[ds_manifest["reference"] == REFERENCE]
+ds_manifest = ds_manifest.set_index("dataset", drop=False)
 
 DIRS_TO_MAKE = ["log", TABLE_DIR, PLOT_DIR]
 
@@ -159,6 +159,8 @@ rule get_sunks:
 		mem=2,
 		hrs=2
 	threads: 1
+	# singularity:
+	# 	"docker://eichlerlab/binf-basics:0.1"
 	run:
 		for i, coords in enumerate(COORDS):
 			if i == 0:
@@ -237,6 +239,8 @@ rule get_long_table:
 		mem=8,
 		hrs=4
 	threads: 1
+	singularity:
+		"docker://eichlerlab/binf-rplot:0.2"
 	shell:
 		'''
 		Rscript {SNAKEMAKE_DIR}/scripts/transform_genotypes.R {input.regions} {MASTER_MANIFEST} {POP_CODES} {wildcards.dataset} {output.tab}

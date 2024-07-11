@@ -13,7 +13,7 @@ REGION_SETS = list(config["bedfiles"].keys())
 DATATYPES = config["data_types"]
 MAX_CP = 50
 
-SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
+# SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 
 
 CONTIGS = []
@@ -28,8 +28,9 @@ for rs in COORDS:
 REFERENCE = config["reference"]
 
 ds_manifest = pd.read_csv(config["datasets_file"], header=0, sep='\t')
-ds_manifest = ds_manifest.ix[ds_manifest.reference == REFERENCE, :]
-ds_manifest.index = ds_manifest.dataset
+ds_manifest = ds_manifest.loc[ds_manifest["reference"] == REFERENCE]
+ds_manifest = ds_manifest.set_index("dataset", drop=False)
+
 
 INIT_MODULES = "source dat/modules.txt"
 
